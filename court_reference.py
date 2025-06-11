@@ -50,6 +50,53 @@ class CourtReference:
 
         self.court = cv2.cvtColor(cv2.imread('court_configurations/court_reference.png'), cv2.COLOR_BGR2GRAY)
 
+    def get_service_box_references(self):
+        """
+        Returns the reference coordinates for the four service boxes.
+        Output: dict mapping box_name to list of four (x,y) tuples (corners).
+                Order of corners: TL, TR, BR, BL (relative to the box itself).
+        """
+        service_boxes = {
+            # Top-left service box (from perspective of the reference image)
+            # Server at bottom, serving to opponent's deuce court (top-left box)
+            "top_left_box": [
+                # Service line Y is self.top_inner_line (y=1110) and self.bottom_inner_line (y=2386)
+                # Center line X is self.middle_line (x=832)
+                # Singles side lines X are self.left_inner_line (x=423) and self.right_inner_line (x=1242)
+
+                # Opponent's Deuce Box (Top-Left Box from image perspective)
+                (self.left_inner_line[0][0], self.top_inner_line[0][1]),      # TL: (left_inner_x, service_line_y_top) = (423, 1110)
+                (self.middle_line[0][0], self.top_inner_line[1][1]),          # TR: (center_line_x, service_line_y_top) = (832, 1110)
+                (self.middle_line[0][0], self.net[0][1]),                     # BR: (center_line_x, net_y) = (832, 1748)
+                (self.left_inner_line[0][0], self.net[0][1]),                 # BL: (left_inner_x, net_y) = (423, 1748)
+            ],
+            # Opponent's Ad Box (Top-Right Box from image perspective)
+            "top_right_box": [
+                (self.middle_line[0][0], self.top_inner_line[0][1]),          # TL: (center_line_x, service_line_y_top) = (832, 1110)
+                (self.right_inner_line[0][0], self.top_inner_line[1][1]),     # TR: (right_inner_x, service_line_y_top) = (1242, 1110)
+                (self.right_inner_line[0][0], self.net[0][1]),                # BR: (right_inner_x, net_y) = (1242, 1748)
+                (self.middle_line[0][0], self.net[0][1]),                     # BL: (center_line_x, net_y) = (832, 1748)
+            ],
+            # Server's Deuce Box (Bottom-Left Box from image perspective) - if server is at top, serving to this box
+            "bottom_left_box": [
+                (self.left_inner_line[1][0], self.net[0][1]),                 # TL: (left_inner_x, net_y) = (423, 1748)
+                (self.middle_line[1][0], self.net[1][1]),                     # TR: (center_line_x, net_y) = (832, 1748)
+                (self.middle_line[1][0], self.bottom_inner_line[0][1]),       # BR: (center_line_x, service_line_y_bottom) = (832, 2386)
+                (self.left_inner_line[1][0], self.bottom_inner_line[1][1]),   # BL: (left_inner_x, service_line_y_bottom) = (423, 2386)
+            ],
+            # Server's Ad Box (Bottom-Right Box from image perspective)
+            "bottom_right_box": [
+                (self.middle_line[1][0], self.net[0][1]),                     # TL: (center_line_x, net_y) = (832, 1748)
+                (self.right_inner_line[1][0], self.net[1][1]),                # TR: (right_inner_x, net_y) = (1242, 1748)
+                (self.right_inner_line[1][0], self.bottom_inner_line[0][1]),  # BR: (right_inner_x, service_line_y_bottom) = (1242, 2386)
+                (self.middle_line[1][0], self.bottom_inner_line[1][1]),       # BL: (center_line_x, service_line_y_bottom) = (832, 2386)
+            ]
+        }
+        # Ensure all points are tuples of numbers
+        for box_name, corners in service_boxes.items():
+            service_boxes[box_name] = [ (float(p[0]), float(p[1])) for p in corners ]
+        return service_boxes
+
     def build_court_reference(self):
         """
         Create court reference image using the lines positions
